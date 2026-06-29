@@ -1,0 +1,22 @@
+# Go build artifacts
+pulumi-file-provider
+bin/
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# Pulumi
+.pulumi/
+Pulumi.*.yaml
+*-access-tokens.json
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

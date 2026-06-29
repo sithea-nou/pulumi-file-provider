@@ -8,25 +8,24 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
-	"k8s.io/utils/diff"
 )
 
 func main() {
 	provider, err := infer.NewProviderBuilder().
 		WithResources(
-			infer.Resource(file{}),
+			infer.Resource[File, FileArgs, FileState](File{}),
 		).
 		WithNamespace("example").
 		Build()
 
-	if err !:= nil {
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
 		os.Exit(1)
 	}
 
 	err = provider.Run(context.Background(), "file", "0.1.0")
 
-	if err !:= nil {
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
 		os.Exit(1)
 	}
@@ -34,7 +33,7 @@ func main() {
 
 type File struct{}
 
-func (f *File) Annotate(a infer.Annotate) {
+func (f *File) Annotate(a infer.Annotator) {
 	a.Describe(&f, "A file projected into a pulumi resource")
 }
 
@@ -44,7 +43,7 @@ type FileArgs struct {
 	Content	string  `pulumi:"content"`
 }
 
-func (f *FileArgs) Annotate(a infer.Annotate) {
+func (f *FileArgs) Annotate(a infer.Annotator) {
 	a.Describe(&f.Content, "The content of the file.")
 	a.Describe(&f.Force, "If an already existing file should be deleted if it exists.")
 	a.Describe(&f.Path, "The path of the file. This defaults to the name of the pulumi resource.")
@@ -56,7 +55,7 @@ type FileState struct {
 	Content string 	`pulumi:"content"`
 }
 
-func (f *FileState) Annotate(a infer.Annotate) {
+func (f *FileState) Annotate(a infer.Annotator) {
 	a.Describe(&f.Content, "The content of the file.")
 	a.Describe(&f.Force, "If an already existing file should be deleted if it exists.")
 	a.Describe(&f.Path, "The path of the file.")
@@ -67,7 +66,7 @@ func (File) Create(ctx context.Context, req infer.CreateRequest[FileArgs]) (resp
 	if !req.Inputs.Force {
 		_, err := os.Stat(req.Inputs.Path)
 		if !os.IsNotExist(err) {
-			return resp, fmt.Errorf("file already exists; pass forec=true to override")
+			return resp, fmt.Errorf("file already exists; pass force=true to override")
 		}
 	}
 
@@ -94,7 +93,7 @@ func (File) Create(ctx context.Context, req infer.CreateRequest[FileArgs]) (resp
 			Force:	req.Inputs.Force,
 			Content:	req.Inputs.Content,
 		},
-	}, nill
+	}, nil
 }
 
 func (File) Delete(ctx context.Context, req infer.DeleteRequest[FileState]) (infer.DeleteResponse, error) {
@@ -144,7 +143,7 @@ func (File) Update(ctx context.Context, req infer.UpdateRequest[FileArgs, FileSt
 	}, nil
 }
 
-func (File) Diff(ctx, context.Context, req infer.DiffRequest[FileArgs, FileState]) (infer.DiffResponse, error) {
+func (File) Diff(ctx context.Context, req infer.DiffRequest[FileArgs, FileState]) (infer.DiffResponse, error) {
 	diff := map[string]p.PropertyDiff{}
 	if req.Inputs.Content != req.State.Content {
 		diff["content"] = p.PropertyDiff{Kind: p.Update}
@@ -189,9 +188,9 @@ func (File) Read(ctx context.Context, req infer.ReadRequest[FileArgs, FileState]
 	}, nil
 }
 
-func (File) WireDependencies(f infer.FiledSelector, arg *FileArgs, state *FileState) {
-	f.OutputField(&state.Content).DependsOn(f.InputField(&args.Content))
-	f.OutputField(&state.Force).DependsOn(f.InputField(&args.Force))
+func (File) WireDependencies(f infer.FieldSelector, arg *FileArgs, state *FileState) {
+	f.OutputField(&state.Content).DependsOn(f.InputField(&arg.Content))
+	f.OutputField(&state.Force).DependsOn(f.InputField(&arg.Force))
 	f.OutputField(&state.Path).DependsOn(f.InputField(&arg.Path))
 }
 
