@@ -5,6 +5,6 @@ go 1.26
 toolchain go1.26.0
 
 require (
-	github.com/pulumi/pulumi-go-provider v1.0.0
-	github.com/pulumi/pulumi/sdk/v3 v3.167.0
+	github.com/pulumi/pulumi-go-provider v1.3.2
+	github.com/pulumi/pulumi/sdk/v3 v3.248.0
 )
